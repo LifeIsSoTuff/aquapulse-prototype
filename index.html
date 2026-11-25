@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AquaPulse Prototype v1 — Campus Water Aid (INT335 Group G14)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+    /* Custom subtle scrollbar for mobile frame */
+    .phone-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+    .phone-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .phone-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      70% { transform: scale(1.15); opacity: 0; }
+      100% { transform: scale(0.95); opacity: 0; }
+    }
+    .animate-pulse-ring {
+      animation: pulse-ring 2s infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-slate-100 text-slate-900">
+
+  <!-- Top Prototype Switcher Bar (For Live Testing & Screenshots) -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-5xl mx-auto px-4 py-3">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2.5">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center font-extrabold text-base shadow-sm">
+            💧
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-bold text-slate-900 text-sm sm:text-base leading-tight">AquaPulse Prototype v1</h1>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800">INT335 • G14</span>
+            </div>
+            <p class="text-xs text-slate-500">Interactive 5-Step MVP • Click naturally or jump to any screen</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="resetPrototypeDemo()" class="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 transition">
+            ↺ Reset Demo State
+          </button>
+        </div>
+      </div>
+
+      <!-- 5-Step Navigation Pills -->
+      <nav class="flex overflow-x-auto gap-1.5 pb-1 no-scrollbar" aria-label="Prototype Steps">
+        <button id="tab-1" onclick="goToStep(1)" class="step-tab shrink-0 px-3 py-2 rounded-lg text-xs font-semibold transition border">
+          Step 1: Machine Tag &amp; QR
+        </button>
+        <button id="tab-2" onclick="goToStep(2)" class="step-tab shrink-0 px-3 py-2 rounded-lg text-xs font-semibold transition border">
+          Step 2: Report Issue
+        </button>
+        <button id="tab-3" onclick="goToStep(3)" class="step-tab shrink-0 px-3 py-2 rounded-lg text-xs font-semibold transition border">
+          Step 3: Nearest Cooler
+        </button>
+        <button id="tab-4" onclick="goToStep(4)" class="step-tab shrink-0 px-3 py-2 rounded-lg text-xs font-semibold transition border flex items-center gap-1.5">
+          <span>Step 4: Caretaker Alert</span>
+          <span id="alert-badge" class="hidden px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-bold">1</span>
+        </button>
+        <button id="tab-5" onclick="goToStep(5)" class="step-tab shrink-0 px-3 py-2 rounded-lg text-xs font-semibold transition border">
+          Step 5: Campus Overview
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Interactive Viewport -->
+  <main class="flex-1 flex flex-col items-center justify-center px-3 py-5 sm:py-7">
+
+    <!-- Toast Notification Banner -->
+    <div id="toast-banner" class="hidden max-w-md w-full mb-3 px-4 py-3 rounded-xl bg-slate-900 text-white text-xs sm:text-sm font-medium shadow-lg flex items-center justify-between gap-3">
+      <span id="toast-message">Status updated!</span>
+      <button onclick="hideToast()" class="text-slate-400 hover:text-white text-xs font-bold">✕</button>
+    </div>
+
+    <!-- Mobile Device Frame -->
+    <div class="w-full max-w-[420px] bg-white rounded-[32px] shadow-xl border-[6px] border-slate-800 overflow-hidden flex flex-col min-h-[670px] max-h-[780px]">
+      
+      <!-- Phone Top Status Bar -->
+      <div class="bg-slate-800 text-white px-5 py-2 flex items-center justify-between text-[11px] font-medium shrink-0">
+        <span>9:41 AM • LPU Campus</span>
+        <div class="w-16 h-3.5 bg-slate-950 rounded-full"></div>
+        <span>5G • 100%</span>
+      </div>
+
+      <!-- Dynamic Screen Container -->
+      <div class="flex-1 overflow-y-auto phone-scroll bg-slate-50 flex flex-col">
+
+        <!-- ========================================================= -->
+        <!-- STEP / SCREEN 1: ON-MACHINE PHYSICAL FLIP TAG & QR STICKER -->
+        <!-- ========================================================= -->
+        <section id="screen-1" class="screen-panel p-4 flex-1 flex flex-col justify-between gap-4">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-full">
+                Physical Machine Collar
+              </span>
+              <span class="text-xs font-mono font-bold text-slate-600">ID: BLK34-GF-01</span>
+            </div>
+
+            <!-- Physical Waterproof Sticker Card -->
+            <div class="bg-white rounded-2xl border-2 border-slate-300 shadow-sm overflow-hidden">
+              <!-- Sticker Top Header -->
+              <div class="bg-sky-700 text-white px-4 py-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-sky-200">AquaPulse Water Point</span>
+                  <span class="text-xs font-bold bg-sky-900/60 px-2 py-0.5 rounded">RO Drinking Water</span>
+                </div>
+                <h2 class="text-base font-extrabold mt-0.5">Block 34 — Ground Floor</h2>
+                <p class="text-xs text-sky-100">Near Parking-Side Washroom Board</p>
+              </div>
+
+              <!-- Interactive 3-State Physical Flip Slider -->
+              <div class="p-4 border-b border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Physical Flip Status Slider</span>
+                  <span class="text-[11px] text-slate-500">(Tap to toggle manually)</span>
+                </div>
+
+                <!-- 3-Way Slider Control -->
+                <div class="grid grid-cols-3 gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+                  <button onclick="setUnitStatus('GREEN', 'Manual Physical Flip')" id="flip-GREEN" class="flip-btn py-2.5 px-2 rounded-lg text-xs font-bold transition flex flex-col items-center gap-1">
+                    <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 block"></span>
+                    <span>GREEN</span>
+                  </button>
+                  <button onclick="setUnitStatus('YELLOW', 'Manual Physical Flip')" id="flip-YELLOW" class="flip-btn py-2.5 px-2 rounded-lg text-xs font-bold transition flex flex-col items-center gap-1">
+                    <span class="w-3.5 h-3.5 rounded-full bg-amber-400 block"></span>
+                    <span>YELLOW</span>
+                  </button>
+                  <button onclick="setUnitStatus('RED', 'Manual Physical Flip')" id="flip-RED" class="flip-btn py-2.5 px-2 rounded-lg text-xs font-bold transition flex flex-col items-center gap-1">
+                    <span class="w-3.5 h-3.5 rounded-full bg-rose-600 block"></span>
+                    <span>RED</span>
+                  </button>
+                </div>
+
+                <!-- Current Physical Status Readout Box -->
+                <div id="s1-status-banner" class="mt-3 p-3 rounded-xl border text-xs">
+                  <!-- Populated by JS -->
+                </div>
+
+                <!-- Repair ETA Selector (Visible when RED) -->
+                <div id="s1-eta-box" class="hidden mt-2.5 p-2.5 rounded-xl bg-rose-50 border border-rose-200">
+                  <label for="repair-eta-select" class="block text-[11px] font-bold text-rose-800 mb-1">
+                    Technician Repair ETA Tag (Covers 1–2 Day Lag):
+                  </label>
+                  <select id="repair-eta-select" onchange="updateRepairEta(this.value)" class="w-full text-xs font-semibold bg-white border border-rose-300 rounded-lg px-2.5 py-1.5 text-slate-800">
+                    <option value="Today by 4:00 PM">Today by 4:00 PM</option>
+                    <option value="Tomorrow Morning (10:00 AM)">Tomorrow Morning (10:00 AM)</option>
+                    <option value="Under Maintenance (Est. 1–2 Days)">Under Maintenance (Est. 1–2 Days)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- QR Scan Section -->
+              <div class="p-4 bg-slate-50 flex items-center gap-3.5 border-b border-slate-200">
+                <!-- Crisp Inline SVG QR Code -->
+                <div class="w-20 h-20 shrink-0 bg-white p-1.5 rounded-xl border-2 border-slate-800 flex items-center justify-center shadow-xs">
+                  <svg viewBox="0 0 100 100" class="w-full h-full fill-slate-900" aria-label="QR Code for BLK34-GF-01">
+                    <rect x="8" y="8" width="28" height="28" fill="none" stroke="#0f172a" stroke-width="6"/>
+                    <rect x="16" y="16" width="12" height="12"/>
+                    <rect x="64" y="8" width="28" height="28" fill="none" stroke="#0f172a" stroke-width="6"/>
+                    <rect x="72" y="16" width="12" height="12"/>
+                    <rect x="8" y="64" width="28" height="28" fill="none" stroke="#0f172a" stroke-width="6"/>
+                    <rect x="16" y="72" width="12" height="12"/>
+                    <rect x="44" y="10" width="8" height="8"/>
+                    <rect x="44" y="26" width="8" height="14"/>
+                    <rect x="10" y="44" width="14" height="8"/>
+                    <rect x="32" y="44" width="20" height="8"/>
+                    <rect x="60" y="44" width="12" height="8"/>
+                    <rect x="80" y="44" width="12" height="16"/>
+                    <rect x="44" y="60" width="8" height="14"/>
+                    <rect x="60" y="64" width="14" height="8"/>
+                    <rect x="80" y="68" width="12" height="24"/>
+                    <rect x="44" y="82" width="26" height="10"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded mb-1">
+                    No App Download Needed
+                  </span>
+                  <h3 class="text-xs font-bold text-slate-900">Empty, Dirty, or Crowded?</h3>
+                  <p class="text-[11px] text-slate-600 leading-snug mt-0.5">
+                    Scan with normal phone camera to alert caretaker in 2 taps &amp; see nearest working cooler.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Static Offline Backup Direction Box -->
+              <div class="p-3 bg-amber-50/90 text-amber-950 text-[11px] leading-snug">
+                <span class="font-extrabold">Offline Backup Guide:</span> Next Closest Coolers →
+                <strong>Block 34 – 1st Floor (1 min walk)</strong> or <strong>Block 28 – Ground Floor (2 min walk)</strong>.
+              </div>
+            </div>
+          </div>
+
+          <!-- Primary CTA to Simulate Scanning -->
+          <button onclick="goToStep(2)" class="w-full py-3.5 px-4 rounded-2xl bg-sky-600 hover:bg-sky-700 active:scale-[0.99] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
+            <span>📷 Simulate QR Scan → Open Web Aid</span>
+          </button>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- STEP / SCREEN 2: INSTANT STATUS & 1-TAP ISSUE REPORTER    -->
+        <!-- ========================================================= -->
+        <section id="screen-2" class="screen-panel hidden p-4 flex-1 flex flex-col justify-between gap-4">
+          <div>
+            <!-- Browser Bar Simulation -->
+            <div class="bg-slate-200/80 rounded-xl px-3 py-1.5 mb-3 flex items-center justify-between text-[11px] text-slate-600">
+              <span class="font-medium truncate">🔒 aquapulse.lpu.in/u/BLK34-GF-01</span>
+              <span class="text-[10px] font-bold text-sky-700">Instant Web</span>
+            </div>
+
+            <!-- Unit Header Card -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs mb-3">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <span class="text-[11px] font-bold text-slate-500">UNIT ID: BLK34-GF-01</span>
+                  <h2 class="text-base font-extrabold text-slate-900">Block 34 — Ground Floor</h2>
+                  <p class="text-xs text-slate-500">Near Parking-Side Washroom</p>
+                </div>
+                <span id="s2-status-pill" class="px-2.5 py-1 rounded-full text-xs font-extrabold shrink-0">
+                  <!-- Populated by JS -->
+                </span>
+              </div>
+
+              <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600">
+                <span>🧹 Last Cleaned: <strong id="s2-last-cleaned">Today at 10:15 AM</strong></span>
+                <span>Staff: <strong>Manish</strong></span>
+              </div>
+            </div>
+
+            <!-- 1-Tap Issue Reporting Grid (Zero Typing) -->
+            <div class="mb-2">
+              <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">
+                Report an Issue in 1 Tap (No Login)
+              </h3>
+              <p class="text-xs text-slate-500 mb-3">
+                Tapping any option alerts Caretaker Manish immediately and finds you the nearest working cooler.
+              </p>
+
+              <div class="grid grid-cols-2 gap-2.5">
+                <button onclick="reportIssue('Water Empty', 'RED', '💧')" class="p-3.5 rounded-2xl bg-white hover:bg-rose-50 border-2 border-slate-200 hover:border-rose-400 text-left transition shadow-xs group">
+                  <div class="text-2xl mb-1.5">💧</div>
+                  <div class="font-bold text-xs text-slate-900 group-hover:text-rose-800">Water Empty</div>
+                  <div class="text-[11px] text-slate-500 mt-0.5 leading-tight">Tank dry / no water flowing</div>
+                </button>
+
+                <button onclick="reportIssue('Basin Dirty / Wet Floor', 'YELLOW', '🧹')" class="p-3.5 rounded-2xl bg-white hover:bg-amber-50 border-2 border-slate-200 hover:border-amber-400 text-left transition shadow-xs group">
+                  <div class="text-2xl mb-1.5">🧹</div>
+                  <div class="font-bold text-xs text-slate-900 group-hover:text-amber-900">Basin Dirty / Wet</div>
+                  <div class="text-[11px] text-slate-500 mt-0.5 leading-tight">Needs mopping or drain clear</div>
+                </button>
+
+                <button onclick="reportIssue('Tap / Cooling Broken', 'RED', '🔧')" class="p-3.5 rounded-2xl bg-white hover:bg-rose-50 border-2 border-slate-200 hover:border-rose-400 text-left transition shadow-xs group">
+                  <div class="text-2xl mb-1.5">🔧</div>
+                  <div class="font-bold text-xs text-slate-900 group-hover:text-rose-800">Tap / Cooling Fault</div>
+                  <div class="text-[11px] text-slate-500 mt-0.5 leading-tight">Broken tap or warm water</div>
+                </button>
+
+                <button onclick="reportIssue('Heavy Post-Break Queue', 'YELLOW', '👥')" class="p-3.5 rounded-2xl bg-white hover:bg-amber-50 border-2 border-slate-200 hover:border-amber-400 text-left transition shadow-xs group">
+                  <div class="text-2xl mb-1.5">👥</div>
+                  <div class="font-bold text-xs text-slate-900 group-hover:text-amber-900">Heavy Queue</div>
+                  <div class="text-[11px] text-slate-500 mt-0.5 leading-tight">10+ min post-lecture rush</div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Secondary Navigation -->
+          <div class="space-y-2 pt-2">
+            <button onclick="goToStep(3)" class="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5">
+              <span>Skip Reporting → Find Nearest Working Cooler</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- STEP / SCREEN 3: SMART NEAREST-COOLER REDIRECT            -->
+        <!-- ========================================================= -->
+        <section id="screen-3" class="screen-panel hidden p-4 flex-1 flex flex-col justify-between gap-3">
+          <div>
+            <!-- Redirect Context Banner -->
+            <div id="s3-redirect-banner" class="p-3.5 rounded-2xl bg-sky-900 text-white mb-3 shadow-xs">
+              <div class="flex items-center gap-2 text-xs font-bold text-sky-300 uppercase tracking-wider mb-1">
+                <span>🧭 Smart Refill Redirect</span>
+              </div>
+              <p id="s3-banner-text" class="text-xs leading-relaxed text-sky-50">
+                Showing the 3 closest verified working &amp; low-crowd water points near <strong>Block 34 Ground Floor</strong>:
+              </p>
+            </div>
+
+            <!-- 3 Ranked Nearby Coolers -->
+            <div class="space-y-2.5">
+              <!-- Option 1 -->
+              <div class="bg-white rounded-2xl p-3.5 border-2 border-emerald-400 shadow-xs">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-600 text-white">#1 FASTEST</span>
+                      <span class="text-xs font-extrabold text-emerald-700">1 min walk (45m)</span>
+                    </div>
+                    <h3 class="text-sm font-extrabold text-slate-900 mt-1">Block 34 — 1st Floor (East Wing)</h3>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 shrink-0">
+                    ● GREEN
+                  </span>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">👥 Low Queue</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">🛡️ Rubber Mat Equipped</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">❄️ Cold &amp; Ambient</span>
+                </div>
+              </div>
+
+              <!-- Option 2 -->
+              <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-xs">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">#2 NEARBY</span>
+                      <span class="text-xs font-bold text-slate-700">2 min walk (110m)</span>
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-900 mt-1">Block 28 — Ground Floor</h3>
+                    <p class="text-[11px] text-slate-500">Follow Washroom Signboard (Main Corridor)</p>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 shrink-0">
+                    ● GREEN
+                  </span>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">👥 Moderate Queue</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">✨ Basin Clean</span>
+                </div>
+              </div>
+
+              <!-- Option 3 -->
+              <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-xs">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">#3 BACKUP</span>
+                      <span class="text-xs font-bold text-slate-700">3 min walk (160m)</span>
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-900 mt-1">Block 27 — Ground Floor (Main Wing)</h3>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 shrink-0">
+                    ● GREEN
+                  </span>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">👥 Low Queue</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">🛡️ Dry Floor</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="grid grid-cols-2 gap-2 pt-2">
+            <button onclick="goToStep(5)" class="py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs transition">
+              🗺️ All Campus Blocks
+            </button>
+            <button onclick="goToStep(4)" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition">
+              👷 Caretaker View →
+            </button>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- STEP / SCREEN 4: CARETAKER ALERT & 1-TAP RESOLUTION VIEW  -->
+        <!-- ========================================================= -->
+        <section id="screen-4" class="screen-panel hidden p-4 flex-1 flex flex-col justify-between gap-4">
+          <div>
+            <!-- Staff Header -->
+            <div class="bg-slate-900 text-white rounded-2xl p-4 mb-3">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400">Housekeeping Staff Portal</span>
+                <span class="text-[11px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">Shift: Morning–Afternoon</span>
+              </div>
+              <h2 class="text-base font-extrabold mt-1">Caretaker Manish (5 Assigned Units)</h2>
+              <p class="text-xs text-slate-300 mt-0.5">
+                Eliminates the 4–6 hr blind spot between scheduled morning &amp; afternoon rounds.
+              </p>
+            </div>
+
+            <!-- Active Alert Card (Dynamic) -->
+            <div id="caretaker-active-box">
+              <!-- Populated by JS -->
+            </div>
+
+            <!-- Routine Checklist Summary -->
+            <div class="mt-3 bg-white rounded-2xl p-3.5 border border-slate-200">
+              <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide mb-2">Assigned Block 34 &amp; 28 Units</h3>
+              <div class="space-y-2 text-xs">
+                <div class="flex items-center justify-between py-1 border-b border-slate-100">
+                  <span class="font-medium text-slate-700">BLK34-GF-01 (Parking Side)</span>
+                  <span id="s4-unit-status" class="font-bold"></span>
+                </div>
+                <div class="flex items-center justify-between py-1 border-b border-slate-100">
+                  <span class="font-medium text-slate-700">BLK34-1F-02 (East Corridor)</span>
+                  <span class="text-emerald-700 font-bold">● Working &amp; Clean</span>
+                </div>
+                <div class="flex items-center justify-between py-1">
+                  <span class="font-medium text-slate-700">BLK28-GF-01 (Washroom Wing)</span>
+                  <span class="text-emerald-700 font-bold">● Working &amp; Clean</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="goToStep(5)" class="w-full py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs transition">
+            View Campus Block Overview (Screen 5) →
+          </button>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- STEP / SCREEN 5: CAMPUS BLOCK OVERVIEW (PRE-WALK CHECKER) -->
+        <!-- ========================================================= -->
+        <section id="screen-5" class="screen-panel hidden p-4 flex-1 flex flex-col justify-between gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <h2 class="text-base font-extrabold text-slate-900">LPU Campus Water Status</h2>
+                <p class="text-xs text-slate-500">Check working coolers before walking between classes</p>
+              </div>
+              <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                Live Sync
+              </span>
+            </div>
+
+            <!-- Block Cards (Blocks 34, 28, 27, 25 from Research) -->
+            <div class="space-y-2.5 mt-3">
+              <!-- Block 34 -->
+              <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-xs">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-extrabold text-slate-900">Block 34 (Academic Complex)</h3>
+                  <span id="s5-blk34-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full"></span>
+                </div>
+                <p id="s5-blk34-desc" class="text-xs text-slate-600 mt-1"></p>
+                <div class="mt-2 flex flex-wrap gap-1.5 text-[10px] font-semibold">
+                  <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-800">1st Floor: Low Rush</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">Caretaker: Manish</span>
+                </div>
+              </div>
+
+              <!-- Block 28 -->
+              <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-xs">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-extrabold text-slate-900">Block 28</h3>
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">2 / 2 Working</span>
+                </div>
+                <p class="text-xs text-slate-600 mt-1">Ground &amp; 1st Floor coolers clean and stocked.</p>
+                <div class="mt-2 flex flex-wrap gap-1.5 text-[10px] font-semibold">
+                  <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800">🛡️ Anti-Slip Mat Installed</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">Cleaned: 10:30 AM</span>
+                </div>
+              </div>
+
+              <!-- Block 27 -->
+              <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-xs">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-extrabold text-slate-900">Block 27</h3>
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">2 / 2 Working</span>
+                </div>
+                <p class="text-xs text-slate-600 mt-1">Main wing &amp; washroom-side coolers operating normally.</p>
+                <div class="mt-2 flex flex-wrap gap-1.5 text-[10px] font-semibold">
+                  <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-800">👥 Low Rush</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">Caretaker: Suresh</span>
+                </div>
+              </div>
+
+              <!-- Block 25 -->
+              <div class="bg-white rounded-2xl p-3.5 border border-amber-200 shadow-xs">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-extrabold text-slate-900">Block 25</h3>
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">1 Working • 1 Repair</span>
+                </div>
+                <p class="text-xs text-slate-600 mt-1">Ground Floor unit under maintenance; 1st Floor unit active.</p>
+                <div class="mt-2 flex flex-wrap gap-1.5 text-[10px] font-semibold">
+                  <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-800">🔧 GF Repair ETA: 1–2 Days</span>
+                  <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800">1F: Working</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="goToStep(1)" class="w-full py-2.5 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs transition">
+            ↺ Back to Step 1 (Physical Cooler Sticker)
+          </button>
+        </section>
+
+      </div>
+
+      <!-- Phone Bottom Home Indicator -->
+      <div class="bg-white py-2 flex justify-center border-t border-slate-100 shrink-0">
+        <div class="w-28 h-1 bg-slate-300 rounded-full"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer Credit -->
+  <footer class="bg-white border-t border-slate-200 py-3 px-4 text-center text-xs text-slate-500">
+    INT335 Design Thinking • <strong>Group G14</strong> (Priyanshu Raj Thakur, Gudisa Aditya, Akanksha Jaswal) • <strong>AquaPulse Prototype v1</strong>
+  </footer>
+
+  <!-- Interactive State Management Script -->
+  <script>
+    // Central reactive prototype state synced across all 5 steps
+    const state = {
+      currentStep: 1,
+      unitId: 'BLK34-GF-01',
+      status: 'GREEN', // 'GREEN' | 'YELLOW' | 'RED'
+      issueLabel: 'Working & Clean (Cold & Ambient Available)',
+      issueIcon: '✅',
+      reportedAt: null,
+      lastCleaned: 'Today at 10:15 AM',
+      repairEta: 'Today by 4:00 PM'
+    };
+
+    function goToStep(stepNum) {
+      state.currentStep = stepNum;
+
+      // Toggle screen visibility
+      document.querySelectorAll('.screen-panel').forEach((el, idx) => {
+        if (idx + 1 === stepNum) {
+          el.classList.remove('hidden');
+        } else {
+          el.classList.add('hidden');
+        }
+      });
+
+      // Highlight active navigation pill
+      document.querySelectorAll('.step-tab').forEach((btn, idx) => {
+        if (idx + 1 === stepNum) {
+          btn.className = 'step-tab shrink-0 px-3 py-2 rounded-lg text-xs font-bold transition border border-sky-600 bg-sky-600 text-white shadow-xs flex items-center gap-1.5';
+        } else {
+          btn.className = 'step-tab shrink-0 px-3 py-2 rounded-lg text-xs font-semibold transition border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5';
+        }
+      });
+
+      renderAllScreens();
+    }
+
+    function setUnitStatus(newStatus, reasonText) {
+      state.status = newStatus;
+      if (newStatus === 'GREEN') {
+        state.issueLabel = 'Working & Clean (Cold & Ambient Available)';
+        state.issueIcon = '✅';
+        state.reportedAt = null;
+        showToast('BLK34-GF-01 set to GREEN: Working & Clean.');
+      } else if (newStatus === 'YELLOW') {
+        state.issueLabel = reasonText || 'Needs Cleaning / Heavy Post-Break Queue';
+        state.issueIcon = '⚠️';
+        state.reportedAt = 'Just now';
+        showToast('Physical tag flipped to YELLOW (' + state.issueLabel + ').');
+      } else if (newStatus === 'RED') {
+        state.issueLabel = reasonText || 'Empty Tank / Under Repair';
+        state.issueIcon = '🚨';
+        state.reportedAt = 'Just now';
+        showToast('Physical tag flipped to RED (' + state.issueLabel + ').');
+      }
+      renderAllScreens();
+    }
+
+    function updateRepairEta(val) {
+      state.repairEta = val;
+      renderAllScreens();
+    }
+
+    function reportIssue(issueName, severityColor, icon) {
+      state.status = severityColor;
+      state.issueLabel = issueName;
+      state.issueIcon = icon;
+      state.reportedAt = 'Just now (1 min ago)';
+
+      renderAllScreens();
+      showToast('Alert sent to Caretaker Manish! Redirecting to nearest working cooler...');
+      goToStep(3);
+    }
+
+    function resolveCaretakerAlert() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      state.status = 'GREEN';
+      state.issueLabel = 'Working & Clean (Verified by Staff)';
+      state.issueIcon = '✅';
+      state.reportedAt = null;
+      state.lastCleaned = 'Just now (' + timeStr + ')';
+
+      renderAllScreens();
+      showToast('Resolved! BLK34-GF-01 reset to GREEN across all screens.');
+    }
+
+    function resetPrototypeDemo() {
+      state.status = 'GREEN';
+      state.issueLabel = 'Working & Clean (Cold & Ambient Available)';
+      state.issueIcon = '✅';
+      state.reportedAt = null;
+      state.lastCleaned = 'Today at 10:15 AM';
+      state.repairEta = 'Today by 4:00 PM';
+      document.getElementById('repair-eta-select').value = state.repairEta;
+      goToStep(1);
+      showToast('Demo reset to clean initial state.');
+    }
+
+    function showToast(msg) {
+      const banner = document.getElementById('toast-banner');
+      document.getElementById('toast-message').textContent = msg;
+      banner.classList.remove('hidden');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        banner.classList.add('hidden');
+      }, 4000);
+    }
+
+    function hideToast() {
+      document.getElementById('toast-banner').classList.add('hidden');
+    }
+
+    function renderAllScreens() {
+      // 1. Update Step 1 Flip Slider Buttons
+      ['GREEN', 'YELLOW', 'RED'].forEach(color => {
+        const btn = document.getElementById('flip-' + color);
+        if (state.status === color) {
+          if (color === 'GREEN') btn.className = 'flip-btn py-2.5 px-2 rounded-lg text-xs font-extrabold transition flex flex-col items-center gap-1 bg-emerald-600 text-white shadow-sm';
+          if (color === 'YELLOW') btn.className = 'flip-btn py-2.5 px-2 rounded-lg text-xs font-extrabold transition flex flex-col items-center gap-1 bg-amber-400 text-slate-950 shadow-sm';
+          if (color === 'RED') btn.className = 'flip-btn py-2.5 px-2 rounded-lg text-xs font-extrabold transition flex flex-col items-center gap-1 bg-rose-600 text-white shadow-sm';
+        } else {
+          btn.className = 'flip-btn py-2.5 px-2 rounded-lg text-xs font-semibold transition flex flex-col items-center gap-1 bg-white text-slate-600 hover:bg-slate-50';
+        }
+      });
+
+      // Step 1 Status Readout & ETA Box
+      const s1Banner = document.getElementById('s1-status-banner');
+      const s1EtaBox = document.getElementById('s1-eta-box');
+      if (state.status === 'GREEN') {
+        s1Banner.className = 'mt-3 p-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-950 text-xs';
+        s1Banner.innerHTML = `<strong>Current Status:</strong> ✅ ${state.issueLabel}`;
+        s1EtaBox.classList.add('hidden');
+      } else if (state.status === 'YELLOW') {
+        s1Banner.className = 'mt-3 p-3 rounded-xl border border-amber-300 bg-amber-50 text-amber-950 text-xs';
+        s1Banner.innerHTML = `<strong>Attention Needed:</strong> ⚠️ ${state.issueLabel}`;
+        s1EtaBox.classList.add('hidden');
+      } else {
+        s1Banner.className = 'mt-3 p-3 rounded-xl border border-rose-300 bg-rose-50 text-rose-950 text-xs';
+        s1Banner.innerHTML = `<strong>Out of Service:</strong> 🚨 ${state.issueLabel}<br><span class="font-semibold">Est. Fix: ${state.repairEta}</span>`;
+        s1EtaBox.classList.remove('hidden');
+      }
+
+      // 2. Update Step 2 Header Pill & Last Cleaned
+      const s2Pill = document.getElementById('s2-status-pill');
+      document.getElementById('s2-last-cleaned').textContent = state.lastCleaned;
+      if (state.status === 'GREEN') {
+        s2Pill.className = 'px-2.5 py-1 rounded-full text-xs font-extrabold shrink-0 bg-emerald-100 text-emerald-800';
+        s2Pill.textContent = '● GREEN: Working';
+      } else if (state.status === 'YELLOW') {
+        s2Pill.className = 'px-2.5 py-1 rounded-full text-xs font-extrabold shrink-0 bg-amber-100 text-amber-900';
+        s2Pill.textContent = '● YELLOW: Alert';
+      } else {
+        s2Pill.className = 'px-2.5 py-1 rounded-full text-xs font-extrabold shrink-0 bg-rose-100 text-rose-800';
+        s2Pill.textContent = '● RED: Down';
+      }
+
+      // 3. Update Step 3 Redirect Banner Text
+      const s3Text = document.getElementById('s3-banner-text');
+      if (state.status === 'GREEN') {
+        s3Text.innerHTML = `<strong>BLK34-GF-01</strong> is currently working, or you can pick one of the 3 closest low-crowd water points below:`;
+      } else {
+        s3Text.innerHTML = `<strong>BLK34-GF-01</strong> was flagged as <strong>"${state.issueLabel}"</strong>. Save break time—head to the nearest working cooler below:`;
+      }
+
+      // 4. Update Step 4 Caretaker Portal & Top Nav Alert Badge
+      const alertBadge = document.getElementById('alert-badge');
+      const caretakerBox = document.getElementById('caretaker-active-box');
+      const s4UnitStatus = document.getElementById('s4-unit-status');
+
+      if (state.status === 'GREEN') {
+        alertBadge.classList.add('hidden');
+        s4UnitStatus.className = 'text-emerald-700 font-bold';
+        s4UnitStatus.textContent = '● Working & Clean';
+        caretakerBox.innerHTML = `
+          <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 text-center">
+            <div class="text-2xl mb-1">✅</div>
+            <h3 class="text-sm font-extrabold text-emerald-950">All Assigned Coolers Clear</h3>
+            <p class="text-xs text-emerald-800 mt-1">
+              No pending student fault reports. Last check logged: <strong>${state.lastCleaned}</strong>.
+            </p>
+            <p class="text-[11px] text-emerald-700 mt-2">
+              (Tip: Try reporting an issue in Step 2 to test live caretaker alerting!)
+            </p>
+          </div>
+        `;
+      } else {
+        alertBadge.classList.remove('hidden');
+        const isRed = state.status === 'RED';
+        s4UnitStatus.className = isRed ? 'text-rose-700 font-bold' : 'text-amber-700 font-bold';
+        s4UnitStatus.textContent = `● ${state.issueLabel}`;
+        caretakerBox.innerHTML = `
+          <div class="bg-white border-2 ${isRed ? 'border-rose-500' : 'border-amber-400'} rounded-2xl p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${isRed ? 'bg-rose-600 text-white' : 'bg-amber-400 text-slate-950'}">
+                🚨 Live Student Alert
+              </span>
+              <span class="text-[11px] font-semibold text-slate-500">${state.reportedAt || 'Just now'}</span>
+            </div>
+            <h3 class="text-sm font-extrabold text-slate-900">BLK34-GF-01 • Block 34 Ground Floor</h3>
+            <p class="text-xs font-semibold ${isRed ? 'text-rose-700' : 'text-amber-800'} mt-1">
+              Reported Issue: ${state.issueIcon} ${state.issueLabel}
+            </p>
+            <p class="text-[11px] text-slate-500 mt-1">
+              Location: Near Parking-Side Washroom Board
+            </p>
+            <button onclick="resolveCaretakerAlert()" class="mt-3 w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition">
+              ✓ Mark Resolved &amp; Clean (Reset to Green)
+            </button>
+          </div>
+        `;
+      }
+
+      // 5. Update Step 5 Campus Block Overview (Block 34 Card)
+      const s5Badge = document.getElementById('s5-blk34-badge');
+      const s5Desc = document.getElementById('s5-blk34-desc');
+      if (state.status === 'GREEN') {
+        s5Badge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+        s5Badge.textContent = '2 / 2 Working';
+        s5Desc.textContent = 'Ground Floor (Parking Side) & 1st Floor coolers both working & clean.';
+      } else {
+        s5Badge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900';
+        s5Badge.textContent = '1 Working • 1 Alert';
+        s5Desc.innerHTML = `<strong>GF Unit:</strong> ${state.issueLabel}. <strong>1st Floor Unit:</strong> Working &amp; Clean.`;
+      }
+    }
+
+    // Initialize on load
+    goToStep(1);
+  </script>
+</body>
+</html>
